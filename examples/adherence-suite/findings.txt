@@ -1,0 +1,6 @@
+/home/tyler/git/TGPSKI/adherence-suite/src/adherence/live.py:580 [error] L1: viewer performs a mutating operation (delete). A viewer reads; the teardown is a separate program (L15). If this is genuinely safe, add: watchctl:allow L1 <reason>
+    shutil.rmtree(d, ignore_errors=True)
+/home/tyler/git/TGPSKI/adherence-suite/src/adherence/live.py [warn] L9: no noise floor declared. A difference smaller than run-to-run variation looks exactly like a finding. Declare NULL_BAND and render below it dim, or render the band as UNKNOWN if it has never been measured.
+
+2 finding(s)
+exit status 1

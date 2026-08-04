@@ -1,0 +1,6 @@
+/home/tyler/git/TGPSKI/leather/examples/14-sig-triage/eval/scripts/watch-matrix.sh:120 [warn] L5: a progress track of dots reads as truncated output rather than 0%. Bracket the bar and pick a track character that cannot be an ellipsis.
+    bar="$(printf '%*s' "$pct" '' | tr ' ' '#')$(printf '%*s' "$((24-pct))" '' | tr ' ' '.')"
+/home/tyler/git/TGPSKI/leather/examples/14-sig-triage/eval/scripts/watch-matrix.sh [warn] L9: no noise floor declared. A difference smaller than run-to-run variation looks exactly like a finding. Declare NULL_BAND and render below it dim, or render the band as UNKNOWN if it has never been measured.
+
+2 finding(s)
+exit status 1

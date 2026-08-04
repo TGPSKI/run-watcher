@@ -1,0 +1,264 @@
+---
+name: run-watcher-phase-02
+description: "Phase 2: The watcher -- a single-screen in-place redraw, ranked by the question, with named callouts. Often the whole answer."
+metadata:
+  author: TGPSKI
+  version: "1.0"
+parent: run-watcher
+---
+
+# Phase 2: The Watcher
+
+One screen, redrawn in place, ranked by the question from Phase 1, with the
+callouts rendered loudly. Shell script — no curses, no dependencies.
+
+**Typical PR**: 1
+**Files produced**: `<scripts>/watch-<job>.sh`, a `watch` make target
+
+Start here even if you know you want Phase 3. This is ~250 lines, it will catch
+things this week, and building it teaches you which views you actually need
+rather than which ones you imagined.
+
+## Prerequisites
+
+- Phase 1 plan merged.
+
+**Carry forward from Phase 1**: the evidence table (paths and what each carries),
+the ranking axis, the callout list with glyphs, `NULL_BAND`, the liveness
+signal, and the stopping point. Do not re-ask for any of these.
+
+---
+
+## Step 1: The redraw loop
+
+**Inspect**: check whether the repo has an existing watch script whose
+conventions should be matched.
+
+| Status | Action |
+|--------|--------|
+| A `watch-*.sh` exists for another job in this repo | Match its structure, flags, and colour handling. Do **not** import its code |
+| No precedent | Use the skeleton below |
+
+**Generate** — the loop. Every line below is load-bearing:
+
+```bash
+#!/usr/bin/env bash
+# Live status of <job>, ranked by <axis from Phase 1>.
+#   LOOP=1 bash <path>          # live, redraw in place
+#   NOCOLOR=1 bash <path>       # plain, for piping
+#
+# Cells are RANKED, not listed in run order: the question asked of this screen
+# is always "<question from Phase 1>", and run order buries that.        [L6]
+#
+# <N> callouts exist because each has already silently changed a run:    [L11]
+#   <NAME>  <what it means, and what it cost>
+
+set -u
+HERE="$(cd "$(dirname "$0")" && pwd)"   # resolve BEFORE any cd
+
+if [ -z "${NOCOLOR:-}" ]; then
+  B=$'\033[1m'; D=$'\033[2m'; R=$'\033[0m'
+  GRN=$'\033[32m'; YEL=$'\033[33m'; RED=$'\033[31m'; CYN=$'\033[36m'
+else
+  B=; D=; R=; GRN=; YEL=; RED=; CYN=
+fi
+
+snapshot() { : ; }        # Steps 2-4 fill this in
+
+if [ -n "${LOOP:-}" ]; then
+  printf '\033[?25l'                                  # hide cursor
+  trap 'printf "\033[?25h\n"; exit 0' INT TERM EXIT   # ALWAYS restore it
+  while :; do
+    printf '\033[H'                                   # home, do NOT clear
+    snapshot | while IFS= read -r line; do
+      printf '%s\033[K\n' "$line"                     # erase to EOL: no tails
+    done
+    printf '\033[J'                                   # drop rows if layout shrank
+    read -t "${INTERVAL:-5}" -rsn1 key || true        # the tick IS the input
+    case "$key" in q) break ;; esac
+  done
+else
+  snapshot
+fi
+```
+
+Why each piece:
+
+| Choice | Reason |
+|---|---|
+| `\033[H` not `clear` | `clear` flashes on every tick and churns scrollback |
+| `\033[K` per row | Shorter lines otherwise leave tails from the previous frame |
+| `\033[J` at the end | Drops leftover rows when the content shrinks |
+| `read -t` as the tick | One call waits out the interval *and* collects a keystroke — interactive sorting with no second thread, no curses |
+| `trap ... EXIT` | A hidden cursor that survives Ctrl-C is a broken terminal, and the user will blame the watcher |
+| `HERE` before any `cd` | `dirname "$0"` points nowhere after a `cd` |
+
+---
+
+## Step 2: Scope, and the knobs
+
+**Inspect** the output root for how many campaigns/runs share it.
+
+| Status | Action |
+|--------|--------|
+| One run per output root | A single `FILTER` knob is enough |
+| Multiple campaigns share a root | Add a `SCOPE` knob. **Required** — watching all at once is what makes a screen unreadable |
+| Multiple machines/rigs | Add a `RIG` knob that also drops the other's whole section |
+
+**Generate**: composable environment knobs, documented in the header and in
+`--help`.
+
+```
+FILTER=<pat>   prefix · glob · substring · comma-ORs · leading ! negates
+SCOPE=...      which campaign; the registered one vs the exploratory pile
+SORT=<col>     the ranking axis, overridable
+NOCOLOR=1      strip ANSI, for piping or pasting
+```
+
+Make the filter grammar forgiving — bare prefix, glob, substring, comma-OR,
+`!` negation. An operator mid-incident should not be debugging a filter.
+
+---
+
+## Step 3: The table
+
+**Generate**, in this order top to bottom:
+
+1. **The in-flight unit and its progress.** The only thing that changes second
+   to second, so it goes where the eye lands first (L6).
+2. A blank line.
+3. **The ranked results table.**
+4. Reference material (a column glossary behind `HELP=1`).
+5. A closing rule and totals — the visual floor, so it stays put no matter what
+   is toggled on.
+
+Column rules:
+
+| Rule | Law |
+|---|---|
+| Render zero as `-`, unrecorded as `?`, inferred as `~` | L5 |
+| Bracket the progress bar; use a track character that is not `.` | L5 |
+| Below `NULL_BAND`, render dim | L9 |
+| Give-ups and truncations in red wherever a cost is shown | L16 |
+| Right-align digits; use fixed widths so columns do not dance between ticks | — |
+
+If a `table.py` or equivalent already renders these rows for the report, **call
+it** rather than reimplementing (L10).
+
+---
+
+## Step 4: The callouts
+
+**Inspect**: the callout list carried from Phase 1.
+
+**Generate** one emitter per callout, printed under the unit it belongs to:
+
+```bash
+[ "${reflect:-0}" -gt 0 ] && \
+  printf '       %sx REFLECTION MODE - payload paginated (%s nav calls)%s\n' \
+         "$RED$B" "$pages" "$R"
+[ "${other:-0}" -gt 0 ] && \
+  printf '       %s! %s unattributed calls (summarization is silent)%s\n' \
+         "$YEL" "$other" "$R"
+```
+
+| Glyph | Severity | Rendered |
+|---|---|---|
+| `x` | Critical — the measurement is compromised | bold red |
+| `!` | Advisory — something is happening you did not ask for | yellow |
+| `~` | Informational — waste, not corruption | yellow, dim |
+
+The glyph carries the severity so it survives `NOCOLOR=1` into a paste (L11).
+
+---
+
+## Step 5: Liveness
+
+**Inspect**: the liveness signal chosen in Phase 1.
+
+| Signal available | Implementation |
+|---|---|
+| Worker names its dir in `argv` | `ps -eo args` and match. No heuristic (L3) |
+| Marker file with a pid | Probe the pid — **and read L1 before writing the probe** |
+| Neither | Fall back to file age, and label it explicitly as an inference |
+
+**Generate** the stall rule with two thresholds (L4):
+
+```bash
+age=999999
+[ -f "$log" ] && age=$(( $(date +%s) - $(command stat -c %Y "$log") ))
+stale=""; [ "$age" -gt "${STALE_S:-90}" ]     && stale=" (STALE ${age}s)"
+[ "$age" -gt "${ABANDONED_S:-1800}" ] && continue   # debris, not a run
+```
+
+Never let the debris threshold swallow the stall threshold. A hung worker is
+exactly what you built this for.
+
+---
+
+## Step 6: Refuse to be dangerous
+
+| Rule | Law |
+|---|---|
+| The script reads. It never writes to, signals, or locks anything the job uses | L1 |
+| Every read tolerates a missing or half-written file — `2>/dev/null`, `${x:-0}` | L2 |
+| No cleanup, no deletion, no kill in this file | L15 |
+| Anything that spends real resources lives in a **separate** entry point with an explicit flag | L14 |
+
+Check the generated script for `rm`, `kill`, `>`, `mv`, `truncate`. There
+should be none.
+
+---
+
+## Validate
+
+**Run it against a real job for one full session.** This is the gate.
+
+```bash
+bash <path>                              # one-shot: does it render at all
+LOOP=1 bash <path>                       # live: watch a real run
+NOCOLOR=1 bash <path> | head -40         # pipe-safe, glyphs still legible
+bash <path> &                            # while a run is being killed:
+                                         # does it show dead workers as live?
+```
+
+| Observation | Action |
+|---|---|
+| Renders correctly, callouts fire when expected | Ship it |
+| Rows claim to run after a teardown | L3 violated. Fix before the PR |
+| It crashed on a torn line | L2 violated. Fix before the PR |
+| A column is blank on every row | The path does not resolve — recheck the Phase 1 evidence table |
+| It flickers or leaves tails | Revisit the Step 1 escape sequences |
+| The run misbehaved while it was open | **Stop.** L1 violated. Find out how before anything else |
+
+Record what the screen showed during validation in the Phase 1 plan. That
+record is the start of the display's regression history (L16).
+
+## PR Checkpoint
+
+**STOP. This phase is complete. Create the PR now.**
+
+**Title**: `watch: live status for <job>, ranked by <axis> — Phase 2`
+
+**Files to include**:
+- `<scripts>/watch-<job>.sh`
+- The `watch` make target
+- The Phase 1 plan, updated with what validation showed
+
+**After creating the PR**, inform the user:
+
+> Watcher shipped. Run it for a while before deciding on Phase 3. The right
+> reason to continue is a specific question this screen cannot answer.
+
+---
+
+## Next Phase
+
+| Condition | Route |
+|---|---|
+| You can name a view this screen cannot show | `references/phase-03-browser.md` |
+| You cannot | **Stop here.** This is a complete deliverable |
+| Results land only on completion, and the screen sits empty | `references/phase-04-live-view.md` — Phase 3 is optional |
+
+**Carry forward**: the loader/table entry point, the knob names and filter
+grammar, the callout emitters, `NULL_BAND`, and the liveness implementation.

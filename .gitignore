@@ -1,0 +1,9 @@
+# Go build artifacts
+scripts/watchctl
+*.test
+
+# Editor and OS noise
+.DS_Store
+*.swp
+.idea/
+.vscode/
