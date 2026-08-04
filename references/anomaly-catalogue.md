@@ -117,6 +117,26 @@ Check these before concluding anything about the job.
 | Two surfaces showing different numbers for one quantity | Two aggregation paths (L10) | Diff the loaders. There should only be one |
 | A number that changes when you only changed the sort | Aggregation happening inside the render loop | Move all computation out of render |
 | A view empty that should not be | Absent vs. empty vs. filtered conflated (L5) | Clear the filter first, always |
+| A finished unit still showing work remaining | A projection divided by *items seen so far* rather than *items that exist* | Check the arithmetic against one complete row: `done` + `left` should equal the configured total, and it will not |
+| A sort that disagrees with the column it names | The sort key and the displayed value were computed separately | Sort by the column, read the top row, confirm it is actually the extreme |
+
+**The "seen so far" denominator deserves its own note**, because it is the
+instrument bug most likely to survive review: the projection is *plausible at
+every moment* and *correct at the end*. Anything divided by a set that grows
+during the run — cells that have reported, workers that have checked in,
+scenarios that have started — is wrong for the whole middle of the run and
+converges only when nobody needs it any more.
+
+Measured instance: `per_cell = expect / len(cells)` read 120/18 = 7 at 86/120,
+so every finished 5-trial cell reported 2 trials left and an eta attached to
+work already done. The fix was not better arithmetic — it was reading `--trials`
+from the batch's own recorded argv, because the runner had already written down
+the answer (L10).
+
+**Design rule that follows**: a denominator must come from configuration or
+from the job's own record, never from a count of what has been observed. If you
+must infer, infer from the fullest unit seen — that can read low, but it never
+invents remaining work.
 
 Roughly a third of what a new screen flags will be in the screen. Fix it —
 an instrument you have learned to discount detects nothing.
