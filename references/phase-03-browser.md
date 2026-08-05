@@ -86,8 +86,35 @@ cannot answer:
 
 ## Step 3: The curses shell
 
-**Generate** a small vendored framework (`tui/framework.py`, `tui/fmt.py`,
-`tui/charts.py`) plus the app. Stdlib only.
+**Do not generate the drawing layer. Copy it.**
+
+`assets/tui/` in this skill holds the whole package — `framework.py`,
+`charts.py`, `fmt.py`, `windows.py` — 384 stdlib-only lines vendored
+byte-identically across three codebases since 2026-07-13. Copy all four:
+`charts.py` reaches `windows.py` through a lazy import inside a branch, so a
+trimmed copy works until the first stacked bar and then raises. Copy them into the target repository beside your
+app:
+
+```bash
+cp -r <skill>/assets/tui <target>/<pkg>/tui
+```
+
+| Status | Action |
+|--------|--------|
+| Target has no TUI package | Copy `assets/tui/` verbatim. Read `assets/tui/README.md` first |
+| Target already vendors this framework | Diff against `assets/tui/`; keep the target's copy if identical, and do not "modernize" it |
+| Target has a different curses base | Keep theirs. Two frameworks is worse than an older one |
+
+You get `TuiApp` (bounds-checked `_put`, colour pairs, a run loop with a
+min-size guard, a footer renderer, and **`scroll_indicator` — which is L8's
+`N–M of T`, already written**), plus `curses_main`, `bar_chart`, and the safe
+formatters.
+
+Rewriting it is the most common way this phase goes wrong: an agent
+re-derives a `_put` without the clip, or without swallowing `curses.error`, and
+the viewer starts dying on rows one column too wide.
+
+**Generate** only the app on top of it.
 
 ```python
 self.curses.halfdelay(20)   # 2s tick: getch returns -1, so we refresh
@@ -203,7 +230,8 @@ make matrix                        # via the repo's target
 
 **Files to include**:
 - The shared loader module
-- `<scripts>/<job>-tui.py` and the vendored `tui/` package
+- `<scripts>/<job>-tui.py`, plus `tui/` copied verbatim from the skill's
+  `assets/tui/` (unmodified — a diff against it should be empty)
 - The Phase 2 watcher, refactored to call the shared loader
 - The `matrix` make target and a `VIEWING.md` documenting every column *and
   what it can mislead you about*

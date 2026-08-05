@@ -31,11 +31,16 @@ over live server data: `sh-web-analytics` (nginx access logs across several
 domains) and `sh-github-analytics` (repository traffic). Both predate the eval
 suite by more than two weeks.
 
-Those two live in a **private** operations repository, so unlike every other
-reference in this document they cannot be followed. The claims made about them
-below are the ones that survive that: line counts, dates, a docstring, and a
-byte-for-byte diff against code you *can* read in
-[leather](https://github.com/TGPSKI/leather) and
+Both currently live in a private operations repository. `sh-github-analytics`
+is slated for public release as **`catnip`**; this document will carry the link
+once it lands rather than pointing at a URL that does not resolve yet.
+`sh-web-analytics` reads production access logs and is expected to stay
+private.
+
+So for now, unlike every other reference in this document, generation 0 cannot
+be followed. The claims made about it below are deliberately the ones that
+survive that: line counts, dates, a docstring, and a byte-for-byte diff against
+code you *can* read in [leather](https://github.com/TGPSKI/leather) and
 [adherence-suite](https://github.com/TGPSKI/adherence-suite).
 
 They matter for three reasons.
