@@ -7,3 +7,8 @@ scripts/watchctl
 *.swp
 .idea/
 .vscode/
+
+# Python bytecode. assets/tui/ is Python, and `make check-assets` imports it
+# to prove the package resolves — which writes __pycache__ next to the source.
+__pycache__/
+*.py[cod]

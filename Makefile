@@ -27,9 +27,9 @@ check-assets: ## The vendored drawing layer must import cleanly and stay stdlib-
 	@# import inside a branch, so anything that only reads the top of a file
 	@# calls windows.py unused -- and dropping it plants an ImportError that
 	@# fires the first time a caller passes stacked segments.
-	@PYTHONPATH=assets python3 -c "from tui import charts, fmt, framework, windows" \
+	@PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=assets python3 -c "from tui import charts, fmt, framework, windows" \
 		|| { echo 'assets/tui: does not import as a package'; exit 1; }
-	@PYTHONPATH=assets python3 -c "from tui.windows import stack_cells" \
+	@PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=assets python3 -c "from tui.windows import stack_cells" \
 		|| { echo 'assets/tui: charts.py needs windows.stack_cells'; exit 1; }
 	@bad="$$(grep -hoE '^[[:space:]]*(import|from) [a-z_.]+' assets/tui/*.py \
 		| awk '{print $$2}' | sort -u \
