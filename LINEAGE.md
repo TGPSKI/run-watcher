@@ -20,6 +20,7 @@ Everything below is checkable. Dates come from `git log`.
 | 2026-07-30 | **2** — the re-application | `15-trust-repair/eval/watch-matrix.sh`, 128 lines | Proof the pattern ports as rules, not code |
 | 2026-08-03 | — | the `no-out` reattribution | L17 — the screen produces suspicion, not evidence |
 | 2026-08-03/04 | **3** — the live view | `matrix_tui.py` (1,869) + `live.py` (629) | Work in flight; probed liveness; process control |
+| 2026-08-04 | **0b′** — the framework goes public | [pane](https://github.com/TGPSKI/pane) | Generation 0b promoted to its own repository: the canonical upstream every copy now re-vendors from, with the byte-identity check as tooling (`make vendor-check`) instead of an instruction |
 
 Nothing here took a quarter to mature, and the pattern did not begin in an
 eval. It began in operations.
@@ -31,16 +32,20 @@ over live server data: `sh-web-analytics` (nginx access logs across several
 domains) and `sh-github-analytics` (repository traffic). Both predate the eval
 suite by more than two weeks.
 
-Both currently live in a private operations repository. `sh-github-analytics`
-is slated for public release as **`catnip`**; this document will carry the link
-once it lands rather than pointing at a URL that does not resolve yet.
-`sh-web-analytics` reads production access logs and is expected to stay
-private.
+Both apps currently live in a private operations repository.
+`sh-github-analytics` is slated for public release as **`catnip`**; this
+document will carry the link once it lands rather than pointing at a URL that
+does not resolve yet. `sh-web-analytics` reads production access logs and is
+expected to stay private.
 
-So for now, unlike every other reference in this document, generation 0 cannot
-be followed. The claims made about it below are deliberately the ones that
-survive that: line counts, dates, a docstring, and a byte-for-byte diff against
-code you *can* read in [leather](https://github.com/TGPSKI/leather) and
+The *framework layer* they share, however, is public as of 2026-08-04:
+[**pane**](https://github.com/TGPSKI/pane) is the canonical upstream of
+`shared/tui/`, carrying the provenance hashes of the extraction in its own
+LINEAGE.md. The apps — the readers, views, and callouts — are what remain
+private; the claims made about them below are deliberately the ones that
+survive that: line counts, dates, a docstring, and a byte-for-byte diff
+against code you *can* read in [pane](https://github.com/TGPSKI/pane),
+[leather](https://github.com/TGPSKI/leather) and
 [adherence-suite](https://github.com/TGPSKI/adherence-suite).
 
 They matter for three reasons.
@@ -52,7 +57,7 @@ those two apps on 2026-07-13 — its own docstring says so:
 > bounds-checked put, base color pairs, run loop with min-size guard, footer
 > renderer, scroll indicator, CSV loading, and the curses.wrapper bootstrap.
 
-All four files are **byte-identical** to the `tui/` package vendored into
+All four files were **byte-identical** to the `tui/` package vendored into
 leather's eval scripts and again into adherence-suite:
 
 ```
@@ -61,6 +66,12 @@ fmt.py          91 lines   IDENTICAL
 framework.py   108 lines   IDENTICAL
 windows.py      58 lines   IDENTICAL
 ```
+
+(Since 2026-08-04 the upstream is [pane](https://github.com/TGPSKI/pane),
+`charts.py` has grown aggregation binning and outlier clipping, a fifth
+module `interact.py` joined at its third duplication, and the identity
+claim is a command — `make vendor-check` in pane — rather than a table
+that can go stale like this one did.)
 
 So **L8's `N–M of T` indicator is not an eval idea.** It is
 `TuiApp.scroll_indicator`, written for a log dashboard sixteen days earlier,

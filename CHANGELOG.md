@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `assets/tui/` is now vendored from its canonical public upstream,
+  [pane](https://github.com/TGPSKI/pane), and picks up the 2026-08-04
+  `bar_chart` upgrades (aggregation binning, outlier clipping, top-row
+  label collision handling) plus the new `interact.py` module
+  (`prompt_search`, `filter_rows`, `hbar`, `cycle`). Byte-identity is now
+  checkable with `make vendor-check` in a pane checkout; provenance
+  updated in `assets/tui/README.md`, `LINEAGE.md`,
+  `references/phase-03-browser.md`, and `PATTERN.md`.
+
 ## [0.1.0] - 2026-08-04
 
 ### Added

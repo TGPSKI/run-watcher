@@ -89,20 +89,22 @@ cannot answer:
 **Do not generate the drawing layer. Copy it.**
 
 `assets/tui/` in this skill holds the whole package — `framework.py`,
-`charts.py`, `fmt.py`, `windows.py` — 384 stdlib-only lines vendored
-byte-identically across three codebases since 2026-07-13. Copy all four:
-`charts.py` reaches `windows.py` through a lazy import inside a branch, so a
-trimmed copy works until the first stacked bar and then raises. Copy them into the target repository beside your
-app:
+`charts.py`, `fmt.py`, `windows.py`, `interact.py` — stdlib-only lines
+vendored byte-identically across four codebases since 2026-07-13, from the
+canonical upstream at [pane](https://github.com/TGPSKI/pane). Copy all of
+it: `charts.py` reaches `windows.py` through a lazy import inside a branch,
+so a trimmed copy works until the first stacked bar and then raises. Copy
+it into the target repository beside your app:
 
 ```bash
 cp -r <skill>/assets/tui <target>/<pkg>/tui
+# or, with a pane checkout: pane/tools/vendor.sh <target>/<pkg>/tui
 ```
 
 | Status | Action |
 |--------|--------|
 | Target has no TUI package | Copy `assets/tui/` verbatim. Read `assets/tui/README.md` first |
-| Target already vendors this framework | Diff against `assets/tui/`; keep the target's copy if identical, and do not "modernize" it |
+| Target already vendors this framework | Diff against `assets/tui/` (or run `make vendor-check` in a pane checkout); if it drifted, re-vendor from pane rather than hand-merging, and do not "modernize" it |
 | Target has a different curses base | Keep theirs. Two frameworks is worse than an older one |
 
 You get `TuiApp` (bounds-checked `_put`, colour pairs, a run loop with a

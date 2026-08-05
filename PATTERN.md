@@ -224,10 +224,10 @@ What transfers: rank by the question, name your callouts after what they
 already ruined, distinct glyphs for distinct absences, probe liveness, one data
 path.
 
-**The exception is the drawing layer.** `shared/tui/` — bounds-checked put, a
-min-size guard, a footer renderer, a scroll indicator — has been vendored
-byte-identically into three codebases across twenty-five days, because it
-encodes nothing about any particular job. That is the test for what belongs in
+**The exception is the drawing layer.** [pane](https://github.com/TGPSKI/pane)
+— bounds-checked put, a min-size guard, a footer renderer, a scroll indicator
+— has been vendored byte-identically into four codebases across twenty-five
+days, because it encodes nothing about any particular job. That is the test for what belongs in
 a framework: if it knows what the numbers *mean*, it is not framework, and
 copying it is how a watcher inherits the wrong question.
 
