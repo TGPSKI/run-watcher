@@ -1,5 +1,5 @@
 {
-  "name": "main-ci",
+  "name": "main-reviews",
   "target": "branch",
   "enforcement": "active",
   "conditions": {
@@ -19,24 +19,14 @@
   ],
   "rules": [
     {
-      "type": "required_status_checks",
+      "type": "pull_request",
       "parameters": {
-        "strict_required_status_checks_policy": true,
-        "required_status_checks": [
-          {
-            "context": "Test & Validate"
-          }
-        ]
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": true,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": true
       }
-    },
-    {
-      "type": "non_fast_forward"
-    },
-    {
-      "type": "deletion"
-    },
-    {
-      "type": "required_signatures"
     }
   ]
 }

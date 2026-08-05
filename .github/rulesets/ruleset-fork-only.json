@@ -1,13 +1,15 @@
 {
-  "name": "release-tags-immutable",
-  "target": "tag",
+  "name": "fork-only",
+  "target": "branch",
   "enforcement": "active",
   "conditions": {
     "ref_name": {
       "include": [
-        "refs/tags/v*"
+        "~ALL"
       ],
-      "exclude": []
+      "exclude": [
+        "refs/heads/main"
+      ]
     }
   },
   "bypass_actors": [
@@ -19,13 +21,13 @@
   ],
   "rules": [
     {
+      "type": "creation"
+    },
+    {
       "type": "update"
     },
     {
       "type": "deletion"
-    },
-    {
-      "type": "required_signatures"
     }
   ]
 }
