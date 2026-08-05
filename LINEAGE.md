@@ -1,25 +1,79 @@
 # Lineage
 
-Run Watcher was not designed on a whiteboard. It accreted across three
-generations in six days, in two repositories, and the accretion is the most
-useful thing about it: each generation added exactly what the previous one
+Run Watcher was not designed on a whiteboard. It accreted across five
+generations in twenty-five days, in three codebases, and the accretion is the
+most useful thing about it: each generation added exactly what the previous one
 turned out to be missing, and the laws were extracted afterward from what had
 already gone wrong.
 
 Everything below is checkable. Dates come from `git log`.
 
-## The six days
+## The twenty-five days
 
 | Date | Generation | Artifact | Added |
 |---|---|---|---|
+| 2026-07-11 | **0** — the analytics TUIs | `sh-web-analytics/ui/terminal_graphs.py` (1,054 lines), then `sh-github-analytics` (1,227) | Curses views over live operational data; the screen as the place you look |
+| 2026-07-13 | **0b** — the framework | `shared/tui/{framework,charts,fmt,windows}.py`, 384 lines | Bounds-checked draw, min-size guard, footer renderer, **scroll indicator** |
+| 2026-07-15/16 | — | redesign across all three `sh-*` apps | The conventions settle under real daily use |
 | 2026-07-29 | **1** — the watcher | `watch-matrix.sh`, 273 lines of bash | Ranked-not-run-ordered; named callouts; in-place ANSI redraw with `read -t` as the tick |
-| 2026-07-30 | **1b** — the browser | `matrix-tui.py`, 660 lines of curses + a vendored `tui/` package | Tabbed views, a facet picker, one shared loader, `NULL_BAND` |
+| 2026-07-30 | **1b** — the browser | `matrix-tui.py`, 660 lines of curses | Tabbed views, a facet picker, one shared loader, `NULL_BAND` |
 | 2026-07-30 | **2** — the re-application | `15-trust-repair/eval/watch-matrix.sh`, 128 lines | Proof the pattern ports as rules, not code |
 | 2026-08-03 | — | the `no-out` reattribution | L17 — the screen produces suspicion, not evidence |
 | 2026-08-03/04 | **3** — the live view | `matrix_tui.py` (1,869) + `live.py` (629) | Work in flight; probed liveness; process control |
 
-Nothing here took a quarter to mature. The 128-line version is the one that
-best demonstrates the pattern transfers.
+Nothing here took a quarter to mature, and the pattern did not begin in an
+eval. It began in operations.
+
+## Generation 0 — the analytics TUIs
+
+The oldest ancestor is not a benchmark viewer. It is a pair of curses dashboards
+over live server data: `sh-web-analytics` (nginx access logs across several
+domains) and `sh-github-analytics` (repository traffic). Both predate the eval
+suite by more than two weeks.
+
+They matter for three reasons.
+
+**The framework is literally the same code.** `shared/tui/` was extracted from
+those two apps on 2026-07-13 — its own docstring says so:
+
+> Extracted from the two live TUIs (sh-web-analytics, sh-github-analytics):
+> bounds-checked put, base color pairs, run loop with min-size guard, footer
+> renderer, scroll indicator, CSV loading, and the curses.wrapper bootstrap.
+
+All four files are **byte-identical** to the `tui/` package vendored into
+leather's eval scripts and again into adherence-suite:
+
+```
+charts.py      127 lines   IDENTICAL
+fmt.py          91 lines   IDENTICAL
+framework.py   108 lines   IDENTICAL
+windows.py      58 lines   IDENTICAL
+```
+
+So **L8's `N–M of T` indicator is not an eval idea.** It is
+`TuiApp.scroll_indicator`, written for a log dashboard sixteen days earlier,
+and every later watcher inherited it without rewriting a line.
+
+**The anomaly-detector role was being practised before it was named.** Two
+files in those repos are saved TUI screen captures, dated 2026-07-12:
+`1d-all-tui-grab-7-12-26.md` and — note the filename —
+`tui-capture-maybe-bugs-7-12-26.md`. Capturing the screen in order to inspect
+it for anomalies *is* the pattern, three weeks before there was an experiment
+to point it at. One capture shows a domain reading `2xx: 0 (0%) · 3xx: 245
+(97%)` with top paths `/.env`, `/config.json`, `/wp-login.php`, `/.git/config`
+— scanner traffic, legible instantly as shape, invisible in any single log
+line.
+
+**It is where the operational instincts came from.** Generation 0 ran against
+data that changes whether or not anyone is watching, on a box doing real work.
+That is the environment that teaches you a viewer must not be able to disturb
+what it observes (**L1**), must survive a narrow terminal rather than emit
+garbage (the min-size guard), and must distinguish a real zero from a missing
+value — the github capture's `Active: 0` beside `Repos: 89` is exactly the
+"count that is always exactly 0" entry in the catalogue.
+
+An eval harness is a *quieter* version of this problem, not a different one.
+The pattern arrived at the eval already load-bearing.
 
 ## Generation 1 — the watcher
 

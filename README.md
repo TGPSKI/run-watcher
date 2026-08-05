@@ -33,8 +33,11 @@ your-job/
 Outputs are POSIX shell and stdlib Python. No dependencies, no framework, no
 web stack, and nothing that requires a particular agent harness.
 
-The pattern was extracted from three generations of a working watcher built in
-six days across [leather](https://github.com/TGPSKI/leather) and
+The pattern was extracted from five generations of a working watcher built over
+twenty-five days across three codebases — starting not in an eval but in a pair
+of live server-analytics dashboards, whose curses framework the later watchers
+vendor byte-for-byte, then
+[leather](https://github.com/TGPSKI/leather) and
 [adherence-suite](https://github.com/TGPSKI/adherence-suite). It sits beside
 [directed-contexts](https://github.com/TGPSKI/directed-contexts) (territories
 agents operate inside) and

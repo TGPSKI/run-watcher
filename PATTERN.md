@@ -200,15 +200,23 @@ once.
 
 ## Portability
 
-A watcher does **not** port between jobs as code. It ports as rules.
+A watcher does **not** port between jobs as code. It ports as rules — with one
+exception, and the exception is instructive.
 
-The best evidence for this is in [LINEAGE.md](LINEAGE.md): a 128-line
+The best evidence for the rule is in [LINEAGE.md](LINEAGE.md): a 128-line
 re-application written the day after a 273-line original, in the same
 repository, for a different experiment — sharing no code and obeying every law.
 
 What transfers: rank by the question, name your callouts after what they
 already ruined, distinct glyphs for distinct absences, probe liveness, one data
 path.
+
+**The exception is the drawing layer.** `shared/tui/` — bounds-checked put, a
+min-size guard, a footer renderer, a scroll indicator — has been vendored
+byte-identically into three codebases across twenty-five days, because it
+encodes nothing about any particular job. That is the test for what belongs in
+a framework: if it knows what the numbers *mean*, it is not framework, and
+copying it is how a watcher inherits the wrong question.
 
 ## Relationship to the sibling patterns
 
