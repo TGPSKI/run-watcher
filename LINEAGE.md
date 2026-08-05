@@ -236,7 +236,7 @@ mistaken for oversights:
 | Multi-phase router, Inspect–Decide–Generate, status-action tables, carry-forward blocks, PR checkpoints | [directed-workflows](https://github.com/TGPSKI/directed-workflows) |
 | A deterministic CLI that inspects rather than asks; the decline-when-too-small gate; `references/` beside a root `SKILL.md` | [directed-contexts](https://github.com/TGPSKI/directed-contexts) |
 | Evidence labelling, and the discipline that a symptom is not a diagnosis | [abductive-triage](https://github.com/TGPSKI/abductive-triage) |
-| Repository frame: identity, governance, GitHub posture, build and quality | [scaffold-repo](https://github.com/TGPSKI/scaffold-repo) |
+| Repository frame: identity, governance, GitHub posture, build and quality | `scaffold-repo` — **private**, so unlinked. Its output is visible here regardless: the four-phase identity/governance/posture/build split, and the fixed-form vs repo-derived distinction that decides which files get templated and which get written from what the repo actually is |
 
 The connection to abductive triage is the deepest. Its central claim is that
 the most common root cause is a coordinate mismatch — the reporter checked the
