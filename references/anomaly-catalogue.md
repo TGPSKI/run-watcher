@@ -107,6 +107,38 @@ the id the worker *echoed*.
 
 ---
 
+## Continuous systems — when there is no "done"
+
+The pattern's oldest use is not a job at all: dashboards over nginx access logs
+and repository traffic, where nothing ever finishes and the question is not
+*"did it work"* but ***"is this normal"***.
+
+That changes what a shape means. In a job, a number out of range is a defect.
+In operations, it is usually **traffic** — and the interesting cases are the
+ones where a perfectly healthy-looking number is the finding.
+
+| Shape on screen | Likely cause | Cheapest check |
+|---|---|---|
+| `2xx: 0 (0%)` with `3xx` near 100% | A domain that only redirects. Fine — unless you thought it served something | Fetch the apex yourself. Compare against what the vhost is *supposed* to do |
+| Top paths are `/.env`, `/wp-login.php`, `/.git/config`, `/config.json` | A scanner sweep. Not an incident, but the ratio to real paths is the number worth trending | Count distinct source IPs for those paths; one host is a scan, many is a campaign |
+| Request count normal, unique IPs collapsed | One client looping — a retry storm or a broken cron, hidden inside a healthy total | Requests per IP, sorted descending. The head is the answer |
+| Unique IPs normal, bytes collapsed | Everything is being served from cache, or everything is failing small | Bytes per response class |
+| A rate that is *too* steady | Synthetic traffic — a monitor, a bot, or your own health check counted as users | Inter-arrival times. Real traffic is bursty; a heartbeat is not |
+| A counter that only ever rises, then flatlines | The collector died, not the traffic. A flat line and a dead pipe look identical | Age of the newest record (**L3** — and read a timestamp *inside* it) |
+| A daily shape that inverts | Timezone or DST handling in the bucketing, far more often than a change in who is visiting | Re-bucket one day by hand |
+| Totals that disagree with the sum of their parts | Bucketing on one key, aggregating on another | Reconcile one bucket end to end (**L10**) |
+
+**The operational version of L9 is load-bearing.** In a benchmark you can often
+skip the noise floor. In operations you cannot: traffic has a *daily and weekly
+shape*, so "up 20%" means nothing without knowing that Tuesdays are up 25%.
+Render the band, or the screen will manufacture incidents every Monday.
+
+**And the operational version of L1 is not optional.** A viewer over production
+data is one careless query away from being load the system did not ask for.
+Read exported aggregates, not the live path; never hold a lock the writer
+wants; and if the only way to see something is to ask the production database
+for it, that is a reason to export it, not a reason to query it.
+
 ## The instrument itself
 
 Check these before concluding anything about the job.

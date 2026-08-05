@@ -1,12 +1,25 @@
 # The Run Watcher Pattern
 
 > Build a live-render TUI that is the control center, debugging surface, and
-> anomaly detector for a long-running concurrent job.
+> anomaly detector for a long-running job — or for a system that never stops.
 
 A **run watcher** is a read-only terminal renderer that joins the evidence a
-running job already leaves on disk and shows it as shape, on a tick, in one
+running system already leaves on disk and shows it as shape, on a tick, in one
 screen. It is not a dashboard, not a log viewer, and not a report. It is an
-instrument you keep open for the life of the run.
+instrument you keep open while the thing runs.
+
+It applies to two kinds of system, and the pattern's oldest instances are the
+second kind:
+
+| Kind | The question | Examples |
+|---|---|---|
+| **A job** — starts, runs, ends | *"Did it work, and will it finish?"* | A benchmark grid, a migration, a batch |
+| **A continuous system** — never ends | *"Is this normal?"* | Access logs, traffic, queue depth, service metrics |
+
+Everything below holds for both. Where they diverge is noted; the sharpest
+divergence is **L9**, which a job can often skip and a continuous system
+cannot, because traffic has a daily and weekly shape and a screen without a
+band manufactures an incident every Monday.
 
 The pattern sits beside [Directed Contexts](https://github.com/TGPSKI/directed-contexts)
 and [Directed Workflows](https://github.com/TGPSKI/directed-workflows): where a

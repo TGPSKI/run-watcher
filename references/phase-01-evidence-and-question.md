@@ -59,7 +59,7 @@ ls -la --time-style=full-iso <store>* 2>/dev/null
 | A store exists with a `-wal` / `.journal` sidecar | Record it. The main file's mtime lies between checkpoints (L3) |
 | Streams are NDJSON | Record the nesting path to the fields you need — these are usually buried |
 
-**Generate** — the evidence table, into the plan:
+**Generate** — the evidence table, into the plan. For a **job**:
 
 ```markdown
 ## Evidence on disk
@@ -73,9 +73,37 @@ ls -la --time-style=full-iso <store>* 2>/dev/null
 | process table | `ps` | live | liveness, process group |
 ```
 
-The **"written when"** column is the load-bearing one. Anything written only on
-completion cannot show work in flight, and that gap is the entire argument for
-Phase 4.
+For a **continuous system**, the same table with different rows — and note that
+"written when" now describes a *cadence*, not a lifecycle:
+
+```markdown
+| Source | Path pattern | Written when | Carries |
+|---|---|---|---|
+| raw log | `/var/log/nginx/access.log*` | continuously, appended + rotated | per-request path, status, bytes, UA |
+| hourly rollup | `stats/hourly.csv` | every hour by cron | requests, bytes, unique IPs per bucket |
+| daily rollup | `stats/daily.csv` | nightly | the same, coarser — the trend axis |
+| history store | `stats/rolling.json` | per collection | prior snapshots, for "is this normal" |
+| collector run | its own log or a stamp file | per collection | **whether the pipeline is alive** |
+```
+
+The **"written when"** column is the load-bearing one either way, but it
+answers a different question in each case:
+
+| Kind | What the column decides |
+|---|---|
+| Job | Whether a live view is needed. Anything written only on completion cannot show work in flight — the entire argument for Phase 4 |
+| Continuous | What your resolution actually is, and how stale "now" is allowed to look. A screen fed by an hourly rollup cannot answer a question about the last ten minutes, and must not appear to |
+
+**The last row is the one people forget.** In a continuous system the collector
+is a component, and a flat line means either "nothing happened" or "the
+collector died" — indistinguishable without evidence about the collector
+itself. Record where that lives, or Phase 2 cannot render the difference (L3).
+
+**Read exported aggregates, never the live path.** If the only way to see
+something is to query the production database or tail the socket, that is a
+reason to *export* it on a cadence, not a reason for the viewer to reach in.
+A viewer that becomes load the system did not ask for has violated L1 as surely
+as one that sends a signal.
 
 ---
 
@@ -83,7 +111,9 @@ Phase 4.
 
 **Decide** — this cannot be derived from disk. Ask:
 
-1. "When you glance at this screen mid-run, what are you actually asking?"
+1. "When you glance at this screen, what are you actually asking?"
+
+For a **job**:
 
 | Answer shape | The screen ranks by | Section priority |
 |---|---|---|
@@ -91,10 +121,25 @@ Phase 4.
 | "Is anything stuck" | Idle time, descending | Running first |
 | "Is it going to finish in time" | Remaining work and rate | Progress first |
 | "Did the last thing I changed help" | Newest results first | Graded first |
-| More than one of these | Build tabs (Phase 3), not one crowded screen | — |
+
+For a **continuous system**, where nothing finishes and the question is *is
+this normal*:
+
+| Answer shape | The screen ranks by | Section priority |
+|---|---|---|
+| "Is anything unusual right now" | Deviation from the band, descending | Current bucket first |
+| "What is the shape of today" | Time, ascending — a chart, not a table | Chart first |
+| "Who is doing this" | Volume per source, descending | Top-N first |
+| "Is the pipeline alive" | Age of the newest record | A single line, always visible |
 
 **Never** answer "what happened most recently." That is a log, and a log is
 what you already have (L6).
+
+**And for a continuous system, never answer it with a bare current value.**
+"1,204 requests" is not an answer to *is this normal*; "1,204, and the band for
+this hour on a Tuesday is 900–1,400" is. If you cannot state the band yet,
+record it as `UNKNOWN` in Step 3 rather than shipping a number that invites a
+conclusion it cannot support.
 
 ---
 

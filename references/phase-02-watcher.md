@@ -32,6 +32,31 @@ signal, and the stopping point. Do not re-ask for any of these.
 **Inspect** the Phase 1 plan — specifically the question, and the stopping
 point recorded in its Step 5.
 
+**The two substrates**, since the choice is meaningless without them:
+
+**Shell + ANSI.** You `printf` whole frames and move the cursor with escape
+codes (`\033[H` to go home, `\033[K` to clear a line). The terminal is a
+teletype you are repainting. `read -t` doubles as both the tick and the
+keyboard. Zero dependencies, and the output pipes — `NOCOLOR=1 … | head` is a
+paste into an issue.
+
+**Curses.** The stdlib `curses` module, wrapping the C `ncurses` library. You
+address individual cells — `addstr(y, x, ...)` — set colour pairs, read keys
+without Enter, and it computes the minimal characters needed to update the
+screen. The name is a pun on *cursor optimization*, from the 1978 BSD library
+that minimized bytes sent over slow serial lines; it is the actual API name,
+not a term of art invented here. `halfdelay(20)` gives a 2-second tick that
+still responds to a keypress instantly.
+
+| | shell + ANSI | curses |
+|---|---|---|
+| Drawing | whole frames, you manage the escape codes | cell-addressed, diffed for you |
+| Tick + input | `read -t` is both | `halfdelay` is both |
+| Pipeable to a file or `head` | **yes** | no |
+| Detail panes, independent scrolling | painful | tractable |
+| Dependencies | none | none (stdlib) |
+| Cost to start | ~250 lines | a `cp` of `assets/tui/`, then the app |
+
 **Decide**:
 
 1. "Does one ranked table answer the question, or do you already know you need

@@ -1,6 +1,6 @@
 ---
 name: run-watcher
-description: "Build a live-render TUI that is the control center, debugging surface, and anomaly detector for a long-running concurrent job. Routes across four phases: evidence inventory, the watcher, the browser, the live view."
+description: "Build a live-render TUI that is the control center, debugging surface, and anomaly detector — for a long-running job, or for a continuous system like logs or traffic where the question is not 'did it work' but 'is this normal'. Routes across four phases: evidence inventory, the watcher, the browser, the live view."
 metadata:
   author: TGPSKI
   version: "1.0"
@@ -10,7 +10,8 @@ compatibility: "POSIX shell, Python 3 (stdlib only). No dependencies, no framewo
 # Run Watcher
 
 Build the instrument before you trust the results. This workflow produces a
-read-only terminal renderer for a long-running job — one focused PR per phase.
+read-only terminal renderer for something you have to watch — a long-running
+job, or a system that never stops. One focused PR per phase.
 
 The claim it is built on:
 
@@ -41,8 +42,9 @@ A results file says `pass`. It cannot say *"this column looks too easy."*
 
 ## Prerequisites
 
-- **A job that actually runs.** This workflow reads real output directories. A
-  watcher validated against nothing is unvalidated.
+- **Something that actually runs.** This workflow reads real output — a job's
+  working directories, or a continuous system's logs and rollups. A watcher
+  validated against nothing is unvalidated.
 - **Start from an up-to-date primary branch.** Progress detection reads files
   merged to the primary branch — not local commits, uncommitted changes, or
   prior session output.
@@ -70,27 +72,57 @@ suspect.
 **Inspect** the job before asking anything:
 
 ```bash
-ls -d ${TMPDIR:-/tmp}/*out* 2>/dev/null | head        # working directories
-ls results/ runs/ archives/ 2>/dev/null | head        # finished artifacts
-ps -eo pid,etimes,args | grep -v grep | head -20      # what is running now
+# a job: working directories, finished artifacts, live processes
+ls -d ${TMPDIR:-/tmp}/*out* 2>/dev/null | head
+ls results/ runs/ archives/ 2>/dev/null | head
+ps -eo pid,etimes,args | grep -v grep | head -20
+
+# a continuous system: raw sources, rollups, and whether the collector is alive
+ls -lt /var/log/*/ stats/ 2>/dev/null | head -20
+ls -lt *.csv *.json 2>/dev/null | head          # exported aggregates
+crontab -l 2>/dev/null | grep -iE 'fetch|collect|analy'
 ```
 
-**Ask**: "Is this the job you want to watch?" — confirm the output root and the
-name of the thing being run.
+**Ask**: "Is this what you want to watch?" — confirm the output root, the name
+of the thing, and **which of the two kinds it is** (below).
 
-## Is this job worth a watcher?
+## What kind of system is this?
+
+The question the screen answers differs, and it changes what Phase 1 asks for.
+
+| Kind | The question | Examples |
+|---|---|---|
+| **A job** — starts, runs, ends | *"Did it work, and is it going to finish?"* | A benchmark grid, a migration, a batch, a build matrix |
+| **A continuous system** — never ends | *"Is this normal?"* | Access logs, traffic, queue depth, a service's own metrics |
+
+Both are in scope; the pattern's oldest instances are the second kind. Where
+they differ:
+
+| | Job | Continuous |
+|---|---|---|
+| Progress | against a known denominator | there isn't one — trend instead |
+| A number out of range | usually a defect | usually just traffic |
+| The noise floor (**L9**) | often skippable | **mandatory** — there is a daily and weekly shape, and without the band the screen invents an incident every Monday |
+| "Finished" | a state to render | doesn't exist; a flat line means the *collector* died (**L3**) |
+| **L1** risk | reading a temp dir | reading production. Read exported aggregates, never the live path |
+
+## Is this worth a watcher?
 
 **Decline** when any two of these hold. Say so plainly and stop.
 
 | Signal | Meaning |
 |---|---|
-| Finishes in under ~2 minutes | Just run it again |
-| No concurrency | The interesting facts are about the set; there is no set |
-| Leaves no intermediate evidence on disk | You would have to instrument the job — inverts the pattern |
-| Will run once | The instrument never amortizes |
+| A job that finishes in under ~2 minutes | Just run it again |
+| No concurrency **and** no history | The interesting facts are about a set — over workers, or over time. One value now is a number, not a shape |
+| Leaves no evidence anywhere but in the live system | You would have to instrument it, or query production — both invert the pattern |
+| A job that will run once | The instrument never amortizes |
 
-The clearest signal you *do* need one: **the user has typed some variant of
-`watch 'ls results/ | wc -l'` more than twice.**
+A continuous system is rarely declined on the first two: it has history by
+definition, and it is by definition going to be looked at again.
+
+The clearest signal you *do* need one: **someone has typed a variant of
+`watch 'ls results/ | wc -l'` — or `tail -f access.log | grep` — more than
+twice.**
 
 ## Detect Current Progress
 
@@ -135,10 +167,10 @@ Detection is based on files on disk from the primary branch. Use Glob and Read.
 |----------|--------|
 | Standard | 1 → 2 → stop, or 1 → 2 → 3 → 4 |
 | Archives only, no in-flight question | 1 → 2 → 3 |
-| Second experiment in a repo that already has a watcher | 1 → 2, obeying `design-laws.md`; do not reuse the code |
+| Second job or system in a repo that already has a watcher | 1 → 2, obeying `design-laws.md`; do not reuse the code |
 | Watcher exists, is wrong, and misled someone | `references/design-laws.md`, then re-enter at the failing phase |
 
-A watcher does **not** port between experiments as code. It ports as rules.
+A watcher does **not** port between jobs as code. It ports as rules.
 The best evidence for this pattern in the wild is a 128-line re-application
 written fresh the day after a 273-line original, obeying the same laws.
 

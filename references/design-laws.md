@@ -164,6 +164,14 @@ Below it, render dim. Above it, warn. Above twice it, alarm. A verdict is only
 This is the cheapest statistical honesty available and it operates at the
 moment of perception, before motivated reasoning gets a turn.
 
+**In a continuous system this law is not optional.** A job can often skip it;
+traffic cannot, because it has a daily and weekly shape. "Requests up 20%" is
+not a finding if Tuesdays are routinely up 25% — and a screen with no band will
+manufacture an incident every Monday morning until people stop believing it.
+The band there is not a single-run noise floor but the expected range *for this
+hour, on this day of week*, and it has to come from the history store rather
+than from intuition.
+
 ---
 
 ## L10 — One data path, so no two surfaces can disagree
