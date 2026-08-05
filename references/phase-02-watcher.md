@@ -1,6 +1,6 @@
 ---
 name: run-watcher-phase-02
-description: "Phase 2: The watcher -- a single-screen in-place redraw, ranked by the question, with named callouts. Often the whole answer."
+description: "Phase 2: The watcher -- one screen on a tick, ranked by the question, with named callouts. Shell or curses; Step 0 decides. Often the whole answer."
 metadata:
   author: TGPSKI
   version: "1.0"
@@ -9,15 +9,13 @@ parent: run-watcher
 
 # Phase 2: The Watcher
 
-One screen, redrawn in place, ranked by the question from Phase 1, with the
-callouts rendered loudly. Shell script — no curses, no dependencies.
+**One screen, redrawn on a tick, ranked by the question from Phase 1, with the
+callouts rendered loudly.** That is the deliverable. The substrate is a
+decision, and it is the first thing this phase makes.
 
 **Typical PR**: 1
-**Files produced**: `<scripts>/watch-<job>.sh`, a `watch` make target
-
-Start here even if you know you want Phase 3. This is ~250 lines, it will catch
-things this week, and building it teaches you which views you actually need
-rather than which ones you imagined.
+**Files produced**: `<scripts>/watch-<job>.sh` **or** `<pkg>/<job>_tui.py` +
+`<pkg>/tui/`, plus a `watch` make target
 
 ## Prerequisites
 
@@ -29,7 +27,53 @@ signal, and the stopping point. Do not re-ask for any of these.
 
 ---
 
-## Step 1: The redraw loop
+## Step 0: Choose the substrate
+
+**Inspect** the Phase 1 plan — specifically the question, and the stopping
+point recorded in its Step 5.
+
+**Decide**:
+
+1. "Does one ranked table answer the question, or do you already know you need
+   several views and a detail pane?"
+
+| Status | Substrate | Why |
+|--------|-----------|-----|
+| One ranked table answers it | **Shell** — Steps 1–6 below | ~250 lines, no Python, no framework. Two of the five generations in `LINEAGE.md` stopped here permanently |
+| You need tabs or a detail pane **and you already know it** | **Curses** — copy `assets/tui/`, then jump to `phase-03-browser.md` Step 3 and return here for Steps 2, 4, 5, 6 | The framework is a `cp`. Writing the render in shell first and porting it is the throwaway work |
+| The screen must show work *in flight* | **Curses**, and read `phase-04-live-view.md` before building | An in-flight view wants a detail pane almost immediately |
+| You cannot tell | **Shell.** Build it, watch a real run, then decide | The cheapest way to find out which views you need is to miss one |
+
+**This ordering is not a ladder.** Generation 0 in `LINEAGE.md` went straight to
+curses over live server logs and was right to; generations 1 and 2 chose shell
+with full knowledge of the curses version and were also right. What decides it
+is the question, not seniority.
+
+**What does NOT change with the substrate**: every rule in Steps 2–6. Ranked by
+the question (L6), named callouts with glyphs (L11), two liveness thresholds
+(L4), distinct glyphs for distinct absences (L5), and no mutation anywhere
+(L1). Those are the phase. The redraw loop is an implementation detail.
+
+| Status | Action |
+|--------|--------|
+| Chose curses | Do **Step 0.5**, then skip Step 1 and do Steps 2–6 |
+| Chose shell | Continue to Step 1 |
+
+### Step 0.5 — curses only: copy the drawing layer
+
+```bash
+cp -r <skill>/assets/tui <target>/<pkg>/tui
+```
+
+384 stdlib-only lines, vendored byte-identically across three codebases. Read
+`assets/tui/README.md` first, copy all four modules, and **do not rewrite
+them** — `phase-03-browser.md` Step 3 explains what you get and how rewriting
+it goes wrong. Then use `halfdelay(20)` as the tick in place of Step 1's
+`read -t`, and continue at Step 2.
+
+---
+
+## Step 1: The redraw loop *(shell substrate)*
 
 **Inspect**: check whether the repo has an existing watch script whose
 conventions should be matched.
@@ -256,7 +300,8 @@ record is the start of the display's regression history (L16).
 
 | Condition | Route |
 |---|---|
-| You can name a view this screen cannot show | `references/phase-03-browser.md` |
+| You can name a view this screen cannot show, and Phase 2 was shell | `references/phase-03-browser.md` — all steps |
+| Same, but Phase 2 was already curses | `references/phase-03-browser.md` — Steps 1, 2, 4, 5, 6. Step 3 is done |
 | You cannot | **Stop here.** This is a complete deliverable |
 | Results land only on completion, and the screen sits empty | `references/phase-04-live-view.md` — Phase 3 is optional |
 

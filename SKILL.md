@@ -147,7 +147,7 @@ written fresh the day after a 273-line original, obeying the same laws.
 | Phase | File | Description | PR |
 |-------|------|-------------|-----|
 | 1 | `references/phase-01-evidence-and-question.md` | Inventory the on-disk evidence; name the question and the wrong shapes | 1 |
-| 2 | `references/phase-02-watcher.md` | The watcher: in-place redraw, ranked, named callouts | 1 |
+| 2 | `references/phase-02-watcher.md` | The watcher: one screen ranked by the question, shell **or** curses — Step 0 decides | 1 |
 | 3 | `references/phase-03-browser.md` | The browser: one shared loader, tabbed views, the noise floor. Copies `assets/tui/` rather than rewriting it | 1 |
 | 4 | `references/phase-04-live-view.md` | In-flight rendering, probed liveness, teardown | 1 |
 | — | `references/design-laws.md` | The laws every phase obeys, each with the failure it prevents | — |
