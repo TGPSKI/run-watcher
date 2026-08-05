@@ -31,6 +31,13 @@ over live server data: `sh-web-analytics` (nginx access logs across several
 domains) and `sh-github-analytics` (repository traffic). Both predate the eval
 suite by more than two weeks.
 
+Those two live in a **private** operations repository, so unlike every other
+reference in this document they cannot be followed. The claims made about them
+below are the ones that survive that: line counts, dates, a docstring, and a
+byte-for-byte diff against code you *can* read in
+[leather](https://github.com/TGPSKI/leather) and
+[adherence-suite](https://github.com/TGPSKI/adherence-suite).
+
 They matter for three reasons.
 
 **The framework is literally the same code.** `shared/tui/` was extracted from
